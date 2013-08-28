@@ -1,0 +1,110 @@
+#!/usr/bin/env drush
+
+<?php
+
+/**
+ * @file
+ *  Drush "shebang" script thats gets all aliases defined in
+ *  /etc/drush/aliases.drushrc.php or elsewhere,
+ *  traverses them, cd's into each alias root, which is a git repo,
+ *  now alias @git is available and we work with it: 
+ *  - Cache clear
+ *  - Sql dump (with predefined options)
+ *  - Add untracked and changed files to git
+ *  - Commit them
+ *  - Push them
+ * 
+ * @see http://drush.ws/examples/example.aliases.drushrc.php and /etc/drush/aliases.drushrc.php
+ *  - Should contain rudimental aliases, each alias should contain at least root and uri.
+ * @see https://gist.github.com/fl3a/3158979
+ *  - Drush configuration for git repositories is used and required.
+ * @see http://www.drush.org/examples/helloworld.script
+ *  - Example drush "shebang" script.
+ */
+
+// Get all aliases.
+$aliases = _drush_sitealias_all_list();
+
+// Drop alias @none
+unset($aliases['@none']);
+
+// Traverse aliases
+foreach($aliases as $alias_name => $alias) {
+  
+  if (is_dir($alias['root']) && is_writable($alias['root'])) {
+    drush_print($alias_name);
+    chdir($alias['root']);
+    //if (is_dir(realpath('../.git')) && is_writable(realpath('../.git'))) {
+    if (is_dir(realpath($alias['root'] . '/../.git')) && is_writable(realpath($alias['root'] . '/../.git'))) {
+       
+      // Try to bootstrap @git.
+      // drush_bootstrap_max_to_sitealias();
+    
+      // Do cache-clear before dump.
+      //drush_invoke('cache-clear', 'all');
+      if (!drush_shell_exec('drush cc all -y --nocolor')) {
+        show_output($alias_name);
+        continue;
+      }
+   
+      // Do sql-dump.
+      if (!drush_shell_exec('drush @git sql-dump --nocolor')) {
+        show_output($alias_name);
+        continue;
+      }
+    
+      // Create git aliases, can't rely on they already exist.
+      if (!drush_shell_exec("git config alias.untracked 'ls-files --other --exclude-standard'")) {
+        show_output($alias_name);
+        continue;
+      }
+      if (!drush_shell_exec("git config alias.add-untracked '!git add $(git untracked)'")) {
+        show_output($alias_name);
+        continue;
+      }
+      
+      // Add untracked files.
+      if (!drush_shell_exec('git add-untracked')) {
+        show_output($alias_name);
+        continue;
+      }
+
+      // Commit.
+      if (!drush_shell_exec("git commit -am  '[AUTO] Added untracked and change files.'")) {
+        show_output($alias_name);
+        continue;
+      }
+
+      // Push it.
+      if (!drush_shell_exec('git push')) {
+        show_output($alias_name);
+        continue;
+      }
+    }
+    else {
+      drush_print($alias['root']. '/../.git does not exist or is not writable.');
+    }
+  }
+  else {
+    drush_print($alias['root'] . ' does not exist.');
+  } 
+}
+
+/**
+ * Shows drush_shell_exec_output() output
+ * 
+ * @param 
+ *   String alias name
+ */
+function show_output($alias_name) {
+  drush_print(
+    dt('Something went wrong, skipping !alias_name:', 
+      array('!alias_name' => $alias_name)
+    )
+  );
+  drush_print(implode("\n", drush_shell_exec_output()));
+}
+
+
+
+
