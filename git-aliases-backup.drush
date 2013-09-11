@@ -22,6 +22,41 @@
  *  - Example drush "shebang" script.
  */
 
+class drushAlias {
+  
+  private $drupalRoot;
+
+  private $aliasName;
+
+  private $drupalVersion;
+
+  private $drushVersion;
+
+  public function __construct($name, $root) {
+    $this->aliasName = $name;
+    $this->drupalRoot = $root
+  }
+
+  public function __destruct() {
+
+  }
+
+  public function getDrupalVerion() {
+
+  }
+
+  b
+
+
+
+}
+
+class gitAlias extends drushAlias {
+
+}
+
+
+
 // Get all aliases.
 $aliases = _drush_sitealias_all_list();
 
