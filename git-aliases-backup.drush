@@ -36,6 +36,10 @@ foreach($aliases as $alias_name => $alias) {
     chdir($alias['root']);
     //if (is_dir(realpath('../.git')) && is_writable(realpath('../.git'))) {
     if (is_dir(realpath($alias['root'] . '/../.git')) && is_writable(realpath($alias['root'] . '/../.git'))) {
+
+      drush_print(alias_drupal_version($alias_name));
+      continue;
+ 
        
       // Try to bootstrap @git.
       // drush_bootstrap_max_to_sitealias();
@@ -105,6 +109,20 @@ function show_output($alias_name) {
   drush_print(implode("\n", drush_shell_exec_output()));
 }
 
-
+/**
+ * Return Drupal version of an drush alias
+ *
+ * @param string alias_name
+ * @return mixed int Drupal major version 
+ *  or FALSE if unable to detect
+ */
+function alias_drupal_version($alias_name) {
+  $output = array();
+  exec("drush $alias_name php-eval 'print drush_drupal_version()'", $output, $exit_status);
+  if (empty($output)) {
+    return FALSE;
+  }
+  return (int)$output[0];
+}
 
 
