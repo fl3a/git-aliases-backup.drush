@@ -22,37 +22,90 @@
  *  - Example drush "shebang" script.
  */
 
-class drushAlias {
+class DrushAlias {
   
-  private $drupalRoot;
+  protected $drupalRoot;
 
-  private $aliasName;
+  protected $aliasName;
 
-  private $drupalVersion;
+  protected $commandLineOptions;
+  
+  protected $drupalVersion;
 
-  private $drushVersion;
+  protected $drushVersion;  
 
-  public function __construct($name, $root) {
+  protected function __construct($name, $root, $options = NULL) {
     $this->aliasName = $name;
-    $this->drupalRoot = $root
+    $this->drupalRoot = $root;
+    if ($options) {
+      $this->$commandLineOptions = $options;
+    }    
   }
 
-  public function __destruct() {
+  protected function __destruct() {
 
   }
 
-  public function getDrupalVerion() {
+  protected function isDrupalRoot() {
 
   }
 
-  b
+  /**
+   * Returns Drupal major version of current alias
+   * 
+   * @return mixed int Drupal major version or FALSE
+   */
+  protected function getDrupalVersion() {
+    return (int)drush_drupal_major_version($this->drupalRoot);    
+  }
 
+  /**
+   * Returns Path to Drush executable
+   * 
+   * @return string Path to Drush executable
+   */  
+  protected function getDrushExecutbable() {
+    return $path;
+  }
 
+  protected function cacheClear() {
+    if (!drush_shell_exec("drush $this->aliasName cc all -y --nocolor $this->commandLineOptions")) {
+      show_output($alias_name);
+      continue;
+    }
+     
+  }
+  
+  protected function cron() {
+    if (!drush_shell_exec("drush $this->aliasName cron --nocolor")) {
+      show_output($alias_name);
+      continue;
+    }
+  }
 
 }
 
-class gitAlias extends drushAlias {
-
+class GitAlias extends DrushAlias {
+  
+  public $uri;
+  
+  public $destination;
+  
+  protected function repoIsWritable() {
+  
+  }
+  
+  protected function sqlDump($dir = FALSE) {
+    
+  } 
+  
+  protected function gitAliases() {
+    
+  }
+  
+  protected function backup() {
+    
+  }
 }
 
 
