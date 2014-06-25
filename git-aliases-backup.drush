@@ -32,17 +32,36 @@ unset($aliases['@none']);
 foreach($aliases as $alias_name => $alias) {
   
   if (is_dir($alias['root']) && is_writable($alias['root'])) {
-    drush_print($alias_name);
-    chdir($alias['root']);
+    if (drush_get_context('DRUSH_VERBOSE')) {
+      drush_print('Alias: ' . $alias_name);
+    }
+    if (!drush_shell_exec('cd ' . $alias['root'])) {
+      show_output($alias_name);
+      continue;
+    }
+
     //if (is_dir(realpath('../.git')) && is_writable(realpath('../.git'))) {
     if (is_dir(realpath($alias['root'] . '/../.git')) && is_writable(realpath($alias['root'] . '/../.git'))) {
-       
-      // Try to bootstrap @git.
-      // drush_bootstrap_max_to_sitealias();
-    
+
+       // Get Drupal version and its corresponding drush version.
+       $output = array();
+       exec("drush $alias_name php-eval 'print drush_drupal_version()'", $output, $exit_status);
+       if (empty($output)) {
+         exit(255);
+       }
+       if (drush_get_context('DRUSH_VERBOSE')) {
+         drush_print('Alias ' . $alias_name . ' is a Drupal v. ' . (int)$output[0]);
+       }
+       if ((int)$output[0] == 5) {
+         $drush = 'drush4';
+       }
+       else {
+         $drush = 'drush';
+       }
+       unset($output);
+ 
       // Do cache-clear before dump.
-      //drush_invoke('cache-clear', 'all');
-      if (!drush_shell_exec('drush cc all -y --nocolor')) {
+      if (!drush_shell_exec('drush @git cc all -y --nocolor')) {
         show_output($alias_name);
         continue;
       }
@@ -52,7 +71,6 @@ foreach($aliases as $alias_name => $alias) {
         show_output($alias_name);
         continue;
       }
-    
       // Create git aliases, can't rely on they already exist.
       if (!drush_shell_exec("git config alias.untracked 'ls-files --other --exclude-standard'")) {
         show_output($alias_name);
@@ -94,9 +112,10 @@ foreach($aliases as $alias_name => $alias) {
  * Shows drush_shell_exec_output() output
  * 
  * @param 
- *   String alias name
+ *   String $alias_name
+ *   String $command
  */
-function show_output($alias_name) {
+function show_output($alias_name, $command = NULL) {
   drush_print(
     dt('Something went wrong, skipping !alias_name:', 
       array('!alias_name' => $alias_name)
