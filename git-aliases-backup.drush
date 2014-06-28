@@ -87,8 +87,9 @@ foreach($aliases as $alias_name => $alias) {
         continue;
       }
 
-      // Commit.
-      if (!drush_shell_exec("git commit -am  '[AUTO] Added untracked and change files.'")) {
+      // Commit.     
+      $commit_message = drush_get_option('commit-message', '[AUTO] Added untracked and change files.');
+      if (!drush_shell_exec("git commit -am  '" . $commit_message . "'")) {
         show_output($alias_name);
         continue;
       }
