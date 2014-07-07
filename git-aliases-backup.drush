@@ -22,14 +22,25 @@
  *  - Example drush "shebang" script.
  */
 
+
 // Get all aliases.
 $aliases = _drush_sitealias_all_list();
 
 // Drop alias @none
 unset($aliases['@none']);
 
+// Get applied aliases to drop.
+$exclude_aliases = drush_get_option('exclude-aliases');
+$exclude = array();
+$exclude = explode(',', $exclude_aliases);
+
 // Traverse aliases
 foreach($aliases as $alias_name => $alias) {
+
+  // Skip loop if in exclude option.
+  if (in_array($alias_name, $exclude)) {
+    continue;
+  }  
   
   if (is_dir($alias['root']) && is_writable($alias['root'])) {
     if (drush_get_context('DRUSH_VERBOSE')) {
@@ -40,7 +51,6 @@ foreach($aliases as $alias_name => $alias) {
       continue;
     }
 
-    //if (is_dir(realpath('../.git')) && is_writable(realpath('../.git'))) {
     if (is_dir(realpath($alias['root'] . '/../.git')) && is_writable(realpath($alias['root'] . '/../.git'))) {
 
        // Get Drupal version and its corresponding drush version.
