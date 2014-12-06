@@ -24,7 +24,6 @@
 
 
 // Get all aliases.
-$aliases = array();
 $aliases = _drush_sitealias_all_list();
 
 // Drop alias @none
@@ -47,8 +46,8 @@ foreach($aliases as $alias_name => $alias) {
     if (drush_get_context('DRUSH_VERBOSE')) {
       drush_print('Alias: ' . $alias_name);
     }
-    // Change to $alias root dir.
     if (!chdir($alias['root'])) {
+      show_output($alias_name);
       continue;
     }
 
@@ -81,15 +80,25 @@ foreach($aliases as $alias_name => $alias) {
       if (!drush_shell_exec('drush @git sql-dump --nocolor')) {
         show_output($alias_name);
         continue;
-
-      // Add changed, untracked and deleted files.
-      if (!drush_shell_exec('git add -A')) {
+      }
+      // Create git aliases, can't rely on they already exist.
+      if (!drush_shell_exec("git config alias.untracked 'ls-files --other --exclude-standard'")) {
+        show_output($alias_name);
+        continue;
+      }
+      if (!drush_shell_exec("git config alias.add-untracked '!git add $(git untracked)'")) {
+        show_output($alias_name);
+        continue;
+      }
+      
+      // Add untracked files.
+      if (!drush_shell_exec('git add-untracked')) {
         show_output($alias_name);
         continue;
       }
 
       // Commit.     
-      $commit_message = drush_get_option('commit-message', '[AUTO] Added new, untracked and changed files.');
+      $commit_message = drush_get_option('commit-message', '[AUTO] Added untracked and change files.');
       if (!drush_shell_exec("git commit -am  '" . $commit_message . "'")) {
         show_output($alias_name);
         continue;
